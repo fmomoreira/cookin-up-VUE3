@@ -1,37 +1,52 @@
-<script lang="ts" >
+<script lang="ts" setup>
+import { ref, onMounted } from 'vue';
 import { itensDeLista1EstaoEmLista2 } from '@/operacoes/listas';
-import type { PropType } from 'vue';
 import { obterReceitas } from '@/http';
+import type { PropType } from 'vue';
 import type IReceita from '@/interfaces/IReceita';
 import BotaoPrincipal from './BotaoPrincipal.vue';
 import CardReceita from './CardReceita.vue';
+import MaskInput from './MaskInput.vue';
+import { wait } from '../operacoes/soma'
 
-export default {
-  props: {
-    ingredientes: { type: Array as PropType<string[]>, required: true }
-  },
-  data() {
-    return {
-      receitasEncontradas: [] as IReceita[]
-    };
-  },
-  async created() {
-    const receitas = await obterReceitas();
+const props = defineProps<{
+  ingredientes: string[]
+}>();
 
-    this.receitasEncontradas = receitas.filter((receita) => {
-      const possoFazerReceita = itensDeLista1EstaoEmLista2(receita.ingredientes, this.ingredientes);
-      return possoFazerReceita;
-    })
-  },
-  components: { BotaoPrincipal, CardReceita },
-  emits: ['editarReceitas']
-}
+const emit = defineEmits(['editarReceitas']);
+
+const receitasEncontradas = ref<IReceita[]>([]);
+ 
+
+const fetchReceitas = async () => {
+  const receitas = await obterReceitas();
+  receitasEncontradas.value = receitas.filter((receita) => {
+    const possoFazerReceita = itensDeLista1EstaoEmLista2(receita.ingredientes, props.ingredientes);
+    return possoFazerReceita;
+  });
+};
+
+
+
+
+onMounted(async () => {
+ 
+  const resultado1 = await wait(15, 25);
+  console.log("Terminou o primeiro resultado, inciando o segundo ", resultado1);
+
+  const resultado2 = await wait(100, 2);
+
+  console.log("finalizou o segundo", resultado2);
+  fetchReceitas()
+})
+
 </script>
+ 
 
 <template>
   <section class="mostrar-receitas">
-    <h1 class="cabecalho titulo-receitas">Receitas do Mike</h1>
-
+    <h1 class="cabecalho titulo-receitas">Receitas</h1>
+    <MaskInput/>
     <p class="paragrafo-lg resultados-encontrados">
       Resultados encontrados: {{ receitasEncontradas.length }}
     </p>
